@@ -8,7 +8,7 @@
 
 #include <asm/uaccess.h>
 
-#define PROCFS_NAME "kmsg_log"
+static const char* PROCFS_NAME = "kmsg_log";
 
 static ssize_t procfile_write ( struct file *file, const char __user *buffer,
 		size_t count, loff_t *data ) {
