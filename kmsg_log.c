@@ -12,6 +12,7 @@ static const char *PROCFS_NAME = "kmsg_log";
 
 // module parameters
 static int raw = 0;
+static int debug = 0;
 
 static ssize_t procfile_write ( struct file *file, const char __user *buffer,
 		size_t count, loff_t *data ) {
@@ -68,13 +69,13 @@ static int __init kmsg_log_init ( void ) {
 		return -ENOMEM;
 	}
 
-	printk(KERN_INFO "/proc/%s created\n", PROCFS_NAME);
+	if (debug) printk(KERN_INFO "/proc/%s created\n", PROCFS_NAME);
 	return 0;
 }
 
 static void __exit kmsg_log_exit ( void ) {
 	remove_proc_entry(PROCFS_NAME, NULL);
-	printk(KERN_INFO "/proc/%s removed\n", PROCFS_NAME);
+	if (debug) printk(KERN_INFO "/proc/%s removed\n", PROCFS_NAME);
 }
 
 MODULE_LICENSE("GPL");
@@ -86,3 +87,6 @@ module_exit(kmsg_log_exit);
 
 module_param(raw, bool, S_IRUSR);
 MODULE_PARM_DESC(raw, "Whether to send raw output to klog, or filter it");
+
+module_param(debug, bool, S_IRUSR);
+MODULE_PARM_DESC(debug, "Enable debug messages");
