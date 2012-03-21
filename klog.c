@@ -15,7 +15,7 @@ int main ( int argc, char* argv[] ) {
 	}
 
 	if ( argc > 1 ) {
-		fprintf(klog, argv[1]);
+		fprintf(klog, "%s", argv[1]);
 	}
 
 	fclose(klog);
