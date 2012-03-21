@@ -10,6 +10,9 @@
 
 static const char* PROCFS_NAME = "kmsg_log";
 
+// module parameters
+static int raw = 0;
+
 static ssize_t procfile_write ( struct file *file, const char __user *buffer,
 		size_t count, loff_t *data ) {
 	char *text, *ptr, *tmp;
@@ -28,15 +31,20 @@ static ssize_t procfile_write ( struct file *file, const char __user *buffer,
 	// add a null-terminator just to be safe
 	text[count] = '\0';
 
-	// tokenize on newline characters
-	ptr = text;
-	tmp = strsep(&ptr, "\r\n");
-	while ( tmp != NULL ) {
-		// ignore empty lines
-		if ( strlen(tmp) > 0 )
-			printk(KERN_INFO "%s\n", tmp);
-
+	if (raw) {
+		// dump raw data
+		printk(text);
+	} else {
+		// tokenize on newline characters
+		ptr = text;
 		tmp = strsep(&ptr, "\r\n");
+		while ( tmp != NULL ) {
+			// ignore empty lines
+			if ( strlen(tmp) > 0 )
+				printk(KERN_INFO "%s\n", tmp);
+
+			tmp = strsep(&ptr, "\r\n");
+		}
 	}
 
 	vfree(text);
@@ -51,7 +59,7 @@ static const struct file_operations procfile_fops = {
 };
 
 static int __init kmsg_log_init ( void ) {
-	procfile = proc_create(PROCFS_NAME, 0200, NULL, &procfile_fops);
+	procfile = proc_create(PROCFS_NAME, S_IWUSR, NULL, &procfile_fops);
 
 	if ( procfile == NULL ) {
 		remove_proc_entry(PROCFS_NAME, NULL);
@@ -69,7 +77,12 @@ static void __exit kmsg_log_exit ( void ) {
 	printk(KERN_INFO "/proc/%s removed\n", PROCFS_NAME);
 }
 
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("Austen Dicken <cvpcsm@gmail.com>");
+MODULE_DESCRIPTION("Provides a mechanism to log to the kernel ring buffer via /proc");
+
 module_init(kmsg_log_init);
 module_exit(kmsg_log_exit);
 
-MODULE_LICENSE("GPL");
+module_param(raw, bool, S_IRUSR);
+MODULE_PARM_DESC(raw, "Whether to send raw output to klog, or filter it");
