@@ -8,7 +8,7 @@
 
 #include <asm/uaccess.h>
 
-static const char* PROCFS_NAME = "kmsg_log";
+static const char *PROCFS_NAME = "kmsg_log";
 
 // module parameters
 static int raw = 0;
@@ -18,7 +18,7 @@ static ssize_t procfile_write ( struct file *file, const char __user *buffer,
 	char *text, *ptr, *tmp;
 
 	text = (char *)vmalloc((count + 1) * sizeof(char));
-	if ( text == NULL ) {
+	if ( !text ) {
 		// out of memory, bail
 		return -ENOMEM;
 	}
@@ -31,14 +31,14 @@ static ssize_t procfile_write ( struct file *file, const char __user *buffer,
 	// add a null-terminator just to be safe
 	text[count] = '\0';
 
-	if (raw) {
+	if ( raw ) {
 		// dump raw data
 		printk(text);
 	} else {
 		// tokenize on newline characters
 		ptr = text;
 		tmp = strsep(&ptr, "\r\n");
-		while ( tmp != NULL ) {
+		while ( tmp ) {
 			// ignore empty lines
 			if ( strlen(tmp) > 0 )
 				printk(KERN_INFO "%s\n", tmp);
@@ -61,7 +61,7 @@ static const struct file_operations procfile_fops = {
 static int __init kmsg_log_init ( void ) {
 	procfile = proc_create(PROCFS_NAME, S_IWUSR, NULL, &procfile_fops);
 
-	if ( procfile == NULL ) {
+	if ( !procfile ) {
 		remove_proc_entry(PROCFS_NAME, NULL);
 		printk(KERN_ALERT "Error: Could not initialize /proc/%s\n",
 			PROCFS_NAME);
